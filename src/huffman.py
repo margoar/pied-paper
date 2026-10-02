@@ -1,7 +1,7 @@
 import heapq
 import json
 from collections import Counter
-
+from logging import root
 
 class Node:
     def __init__(self, character=None, frequency=0):
@@ -9,7 +9,6 @@ class Node:
         self.frequency = frequency
         self.left = None
         self.right = None
-
 
 def build_initial_heap(frequencies):
     heap = []
@@ -20,28 +19,22 @@ def build_initial_heap(frequencies):
 
         heapq.heappush(heap, (frequency, counter, node))
         counter += 1
-
     return heap
-
 
 def build_tree(frequencies):
     heap = build_initial_heap(frequencies)
     counter = len(heap)
-
     while len(heap) > 1:
         _, _, left = heapq.heappop(heap)
         _, _, right = heapq.heappop(heap)
 
         parent = Node(frequency=left.frequency + right.frequency)
-
         parent.left = left
         parent.right = right
 
         heapq.heappush(heap, (parent.frequency, counter, parent))
         counter += 1
-
     return heapq.heappop(heap)[2]
-
 
 def generate_codes(node, code="", codes=None):
     if codes is None:
@@ -61,7 +54,6 @@ def encode(text, codes):
 
     for character in text:
         encoded += codes[character]
-
     return encoded
 
 def decode(encoded, root):
@@ -80,9 +72,7 @@ def decode(encoded, root):
         if current.character is not None:
             decoded += current.character
             current = root
-
     return decoded
-
 
 def bits_to_bytes(bits):
     padding = (8 - len(bits) % 8) % 8
@@ -100,24 +90,21 @@ def save_compressed(data, filename):
     with open(filename, "wb") as file:
         file.write(data)
 
-def save_compressed(data, padding, codes, filename):
+def save_compressed(data, padding, root, filename):
     metadata = {
         "padding": padding,
-        "codes": codes
+        "tree": serialize_tree(root)
     }
 
-   
     metadata_bytes = json.dumps(metadata).encode("utf-8")
     metadata_size = len(metadata_bytes)
-
-    print("Metadata:", metadata_size, "bytes")
 
     with open(filename, "wb") as file:
         file.write(b"PP")
         file.write(bytes([1]))
         file.write(metadata_size.to_bytes(4, "big"))
         file.write(metadata_bytes)
-        file.write(data)       
+        file.write(data)     
 
 def bytes_to_bits(data, padding):
     bits = ""
@@ -150,11 +137,12 @@ def load_compressed(filename):
 
         data = file.read()
 
-    return data, metadata["padding"], metadata["codes"]
+    root = deserialize_tree(metadata["tree"])
+    return data, metadata["padding"], root
+
 
 def build_tree_from_codes(codes):
     root = Node()
-
     for character, code in codes.items():
         current = root
 
@@ -162,17 +150,12 @@ def build_tree_from_codes(codes):
             if bit == "0":
                 if current.left is None:
                     current.left = Node()
-
                 current = current.left
-
             else:
                 if current.right is None:
                     current.right = Node()
-
                 current = current.right
-
         current.character = character
-
     return root
 
 def compress(text, filename):
@@ -185,15 +168,46 @@ def compress(text, filename):
 
     data, padding = bits_to_bytes(encoded)
 
-    save_compressed(data, padding, codes, filename)
+    save_compressed(data, padding, root, filename)
 
 def decompress(filename):
-    data, padding, codes = load_compressed(filename)
+    data, padding, root = load_compressed(filename)
 
     bits = bytes_to_bits(data, padding)
 
-    root = build_tree_from_codes(codes)
-
     return decode(bits, root)
 
+def serialize_tree(node):
+    if node.character is not None:
+        return {
+            "type": "leaf",
+            "character": node.character
+        }
 
+    return {
+        "type": "node",
+        "left": serialize_tree(node.left),
+        "right": serialize_tree(node.right)
+    }
+
+def deserialize_tree(data):
+    if data["type"] == "leaf":
+        return Node(character=data["character"])
+
+    node = Node()
+
+    node.left = deserialize_tree(data["left"])
+    node.right = deserialize_tree(data["right"])
+
+    return node
+
+def compress_text(text):
+    frequencies = Counter(text)
+
+    root = build_tree(frequencies)
+    encoded = encode(text, generate_codes(root))
+
+    return encoded, root
+
+def decompress_text(encoded, root):
+    return decode(encoded, root)

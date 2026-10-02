@@ -65,6 +65,14 @@ def test_single_character():
     assert decoded == text
 
 
+def test_invalid_pp_file(tmp_path):
+    file = tmp_path / "invalido.pp"
+    file.write_bytes(b"NO")
 
+    try:
+        decompress(str(file))
+        assert False
+    except ValueError as error:
+        assert str(error) == "El archivo no es un archivo PiedPiper válido"
 
 
