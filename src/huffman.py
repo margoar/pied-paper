@@ -50,6 +50,19 @@ def build_tree(frequencies):
     return heapq.heappop(heap)[2]
 
 
+def generate_codes(node, code="", codes=None):
+    if codes is None:
+        codes = {}
+
+    if node.character is not None:
+        codes[node.character] = code
+        return codes
+
+    generate_codes(node.left, code + "0", codes)
+    generate_codes(node.right, code + "1", codes)
+
+    return codes
+
 def print_tree(node, prefix=""):
     if node is None:
         return
@@ -72,3 +85,11 @@ frequencies = {
 root = build_tree(frequencies)
 
 print_tree(root)
+
+
+codes = generate_codes(root)
+
+print("\nCódigos:")
+
+for character, code in codes.items():
+    print(f"{character} → {code}")
