@@ -1,24 +1,16 @@
 # 🐀 Pied Piper
 
-An educational implementation of data compression algorithms built
-from scratch to understand how and why compression works.
+Este es un proyecto que estoy construyendo para entender de verdad cómo
+funciona la compresión de datos.
 
-Inspired by the fictional Pied Piper compression algorithm from
-*Silicon Valley*.
+La idea nació un poco por culpa de *Silicon Valley* y su famoso
+"Pied Piper" 😂. Pero más que intentar hacer magia, quiero entender
+qué hay detrás de un algoritmo de compresión y hasta dónde puedo llevarlo.
 
-## Goal
+## ¿Qué quiero hacer?
 
-Build a lossless compression engine from first principles and
-progressively explore:
+Quiero construir un compresor desde cero, partiendo por los conceptos
+más básicos y agregando poco a poco algoritmos más avanzados.
 
-- Bits and bytes
-- Redundancy
-- Information entropy
-- Huffman coding
-- Dictionary compression
-- LZ algorithms
-- Hybrid compression
-- Compression benchmarks
-- Image compression
-- Video compression
-
+La idea es que el proyecto no sea solamente "hacer que funcione", sino
+entender **por qué funciona** cada parte.
