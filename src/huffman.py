@@ -1,6 +1,7 @@
 import heapq
 import json
-from typing import Counter
+from collections import Counter
+
 
 class Node:
     def __init__(self, character=None, frequency=0):
@@ -112,9 +113,11 @@ def save_compressed(data, padding, codes, filename):
     print("Metadata:", metadata_size, "bytes")
 
     with open(filename, "wb") as file:
+        file.write(b"PP")
+        file.write(bytes([1]))
         file.write(metadata_size.to_bytes(4, "big"))
         file.write(metadata_bytes)
-        file.write(data)        
+        file.write(data)       
 
 def bytes_to_bits(data, padding):
     bits = ""
@@ -129,6 +132,16 @@ def bytes_to_bits(data, padding):
 
 def load_compressed(filename):
     with open(filename, "rb") as file:
+        magic = file.read(2)
+
+        if magic != b"PP":
+            raise ValueError("El archivo no es un archivo PiedPiper válido")
+
+        version = file.read(1)[0]
+
+        if version != 1:
+            raise ValueError(f"Versión no soportada: {version}")
+
         metadata_size = int.from_bytes(file.read(4), "big")
 
         metadata = json.loads(
@@ -182,3 +195,5 @@ def decompress(filename):
     root = build_tree_from_codes(codes)
 
     return decode(bits, root)
+
+
