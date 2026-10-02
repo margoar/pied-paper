@@ -22,6 +22,3 @@ progressively explore:
 - Image compression
 - Video compression
 
-## Current Status
-
-🚧 Project initialization.
