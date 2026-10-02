@@ -3,6 +3,9 @@ import json
 from collections import Counter
 from logging import root
 
+
+
+
 class Node:
     def __init__(self, character=None, frequency=0):
         self.character = character
@@ -245,3 +248,40 @@ def compress_text(text):
 
 def decompress_text(encoded, root):
     return decode(encoded, root)
+
+def compress_bytes(data):
+    frequencies = Counter(data)
+
+    root = build_tree(frequencies)
+    codes = generate_codes(root)
+
+    encoded = "".join(codes[byte] for byte in data)
+
+    return encoded, root
+
+def decompress_bytes(encoded, root):
+    decoded = decode(encoded, root)
+
+    return bytes(decoded)
+
+def decode_bytes(encoded, root):
+    if root.left is None and root.right is None:
+        return bytes([root.character]) * len(encoded)
+
+    decoded = bytearray()
+    current = root
+
+    for bit in encoded:
+        if bit == "0":
+            current = current.left
+        else:
+            current = current.right
+
+        if current.character is not None:
+            decoded.append(current.character)
+            current = root
+
+    return bytes(decoded)
+
+def decompress_bytes(encoded, root):
+    return decode_bytes(encoded, root)
