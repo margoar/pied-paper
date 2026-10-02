@@ -1,6 +1,6 @@
 from collections import Counter
 
-from huffman import build_tree, generate_codes, encode, decode
+from huffman import bits_to_bytes, build_tree, generate_codes, encode, decode, save_compressed,load_compressed,bytes_to_bits, build_tree_from_codes
 
 text = "AAAAABBBCC"
 
@@ -12,11 +12,20 @@ codes = generate_codes(root)
 
 encoded = encode(text, codes)
 
-print("Texto:", text)
-print("Códigos:", codes)
-print("Comprimido:", encoded)
-print("Bits:", len(encoded))
+data, padding = bits_to_bytes(encoded)
 
-decoded = decode(encoded, root)
+save_compressed(data, padding, codes, "ejemplo.pp")
+
+data, padding, codes = load_compressed("ejemplo.pp")
+
+bits = bytes_to_bits(data, padding)
+
+print("Bits recuperados:", bits)
+print("Bytes:", data)
+print("Padding:", padding)
+
+root = build_tree_from_codes(codes)
+
+decoded = decode(bits, root)
 
 print("Descomprimido:", decoded)

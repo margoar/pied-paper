@@ -1,5 +1,5 @@
 import heapq
-
+import json
 
 class Node:
     def __init__(self, character=None, frequency=0):
@@ -77,3 +77,80 @@ def decode(encoded, root):
             current = root
 
     return decoded
+
+
+def bits_to_bytes(bits):
+    padding = (8 - len(bits) % 8) % 8
+    bits += "0" * padding
+
+    data = bytearray()
+
+    for i in range(0, len(bits), 8):
+        byte = bits[i:i + 8]
+        data.append(int(byte, 2))
+
+    return bytes(data), padding
+
+def save_compressed(data, filename):
+    with open(filename, "wb") as file:
+        file.write(data)
+
+def save_compressed(data, padding, codes, filename):
+    metadata = {
+        "padding": padding,
+        "codes": codes
+    }
+
+    metadata_bytes = json.dumps(metadata).encode("utf-8")
+    metadata_size = len(metadata_bytes)
+
+    with open(filename, "wb") as file:
+        file.write(metadata_size.to_bytes(4, "big"))
+        file.write(metadata_bytes)
+        file.write(data)        
+
+def bytes_to_bits(data, padding):
+    bits = ""
+
+    for byte in data:
+        bits += format(byte, "08b")
+
+    if padding:
+        bits = bits[:-padding]
+
+    return bits
+
+def load_compressed(filename):
+    with open(filename, "rb") as file:
+        metadata_size = int.from_bytes(file.read(4), "big")
+
+        metadata = json.loads(
+            file.read(metadata_size).decode("utf-8")
+        )
+
+        data = file.read()
+
+    return data, metadata["padding"], metadata["codes"]
+
+def build_tree_from_codes(codes):
+    root = Node()
+
+    for character, code in codes.items():
+        current = root
+
+        for bit in code:
+            if bit == "0":
+                if current.left is None:
+                    current.left = Node()
+
+                current = current.left
+
+            else:
+                if current.right is None:
+                    current.right = Node()
+
+                current = current.right
+
+        current.character = character
+
+    return root
