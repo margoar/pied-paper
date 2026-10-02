@@ -1,4 +1,7 @@
-from huffman import compress_file, decompress_file
+from .compressor import (
+    compress_file,
+    decompress_file
+)
 
 
 compress_file(

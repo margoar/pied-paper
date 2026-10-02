@@ -1,9 +1,5 @@
 import heapq
-import json
 from collections import Counter
-from logging import root
-
-
 
 
 class Node:
@@ -12,6 +8,7 @@ class Node:
         self.frequency = frequency
         self.left = None
         self.right = None
+
 
 def build_initial_heap(frequencies):
     heap = []
@@ -22,22 +19,28 @@ def build_initial_heap(frequencies):
 
         heapq.heappush(heap, (frequency, counter, node))
         counter += 1
+
     return heap
+
 
 def build_tree(frequencies):
     heap = build_initial_heap(frequencies)
     counter = len(heap)
+
     while len(heap) > 1:
         _, _, left = heapq.heappop(heap)
         _, _, right = heapq.heappop(heap)
 
         parent = Node(frequency=left.frequency + right.frequency)
+
         parent.left = left
         parent.right = right
 
         heapq.heappush(heap, (parent.frequency, counter, parent))
         counter += 1
+
     return heapq.heappop(heap)[2]
+
 
 def generate_codes(node, code="", codes=None):
     if codes is None:
@@ -52,12 +55,15 @@ def generate_codes(node, code="", codes=None):
 
     return codes
 
-def encode(text, codes):
+
+def encode(data, codes):
     encoded = ""
 
-    for character in text:
-        encoded += codes[character]
+    for value in data:
+        encoded += codes[value]
+
     return encoded
+
 
 def decode(encoded, root):
     if root.left is None and root.right is None:
@@ -75,127 +81,40 @@ def decode(encoded, root):
         if current.character is not None:
             decoded += current.character
             current = root
+
     return decoded
 
-def bits_to_bytes(bits):
-    padding = (8 - len(bits) % 8) % 8
-    bits += "0" * padding
 
-    data = bytearray()
+def decode_bytes(encoded, root):
+    if root.left is None and root.right is None:
+        return bytes([root.character]) * len(encoded)
 
-    for i in range(0, len(bits), 8):
-        byte = bits[i:i + 8]
-        data.append(int(byte, 2))
+    decoded = bytearray()
+    current = root
 
-    return bytes(data), padding
+    for bit in encoded:
+        if bit == "0":
+            current = current.left
+        else:
+            current = current.right
 
-def save_compressed(data, padding, root, filename):
-    tree_data = serialize_tree_binary(root)
-    tree_size = len(tree_data)
+        if current.character is not None:
+            decoded.append(current.character)
+            current = root
 
-    with open(filename, "wb") as file:
-        file.write(b"PP")
-        file.write(bytes([1]))
-
-        file.write(tree_size.to_bytes(4, "big"))
-        file.write(bytes([padding]))
-
-        file.write(tree_data)
-        file.write(data)    
-
-def bytes_to_bits(data, padding):
-    bits = ""
-
-    for byte in data:
-        bits += format(byte, "08b")
-
-    if padding:
-        bits = bits[:-padding]
-
-    return bits
-
-def load_compressed(filename):
-    with open(filename, "rb") as file:
-        magic = file.read(2)
-
-        if magic != b"PP":
-            raise ValueError("El archivo no es un archivo PiedPiper válido")
-
-        version = file.read(1)[0]
-
-        if version != 1:
-            raise ValueError(f"Versión no soportada: {version}")
-
-        tree_size = int.from_bytes(file.read(4), "big")
-        padding = file.read(1)[0]
-
-        tree_data = file.read(tree_size)
-        data = file.read()
-
-        root, _ = deserialize_tree_binary(tree_data)
-
-    return data, padding, root
+    return bytes(decoded)
 
 
-def build_tree_from_codes(codes):
-    root = Node()
-    for character, code in codes.items():
-        current = root
-
-        for bit in code:
-            if bit == "0":
-                if current.left is None:
-                    current.left = Node()
-                current = current.left
-            else:
-                if current.right is None:
-                    current.right = Node()
-                current = current.right
-        current.character = character
-    return root
-
-def compress(text, filename):
-    frequencies = Counter(text)
+def compress_bytes(data):
+    frequencies = Counter(data)
 
     root = build_tree(frequencies)
     codes = generate_codes(root)
 
-    encoded = encode(text, codes)
+    encoded = encode(data, codes)
 
-    data, padding = bits_to_bytes(encoded)
+    return encoded, root
 
-    save_compressed(data, padding, root, filename)
-
-def decompress(filename):
-    data, padding, root = load_compressed(filename)
-
-    bits = bytes_to_bits(data, padding)
-
-    return decode(bits, root)
-
-def serialize_tree(node):
-    if node.character is not None:
-        return {
-            "type": "leaf",
-            "character": node.character
-        }
-
-    return {
-        "type": "node",
-        "left": serialize_tree(node.left),
-        "right": serialize_tree(node.right)
-    }
-
-def deserialize_tree(data):
-    if data["type"] == "leaf":
-        return Node(character=data["character"])
-
-    node = Node()
-
-    node.left = deserialize_tree(data["left"])
-    node.right = deserialize_tree(data["right"])
-
-    return node
 
 def serialize_tree_binary(node):
     if node.character is not None:
@@ -206,6 +125,7 @@ def serialize_tree_binary(node):
         + serialize_tree_binary(node.left)
         + serialize_tree_binary(node.right)
     )
+
 
 def deserialize_tree_binary(data, index=0):
     marker = data[index]
@@ -228,76 +148,3 @@ def deserialize_tree_binary(data, index=0):
         return node, index
 
     raise ValueError("Árbol Huffman inválido")
-
-def compress_text(text):
-    frequencies = Counter(text)
-
-    root = build_tree(frequencies)
-    encoded = encode(text, generate_codes(root))
-
-    return encoded, root
-
-def decompress_text(encoded, root):
-    return decode(encoded, root)
-
-def compress_bytes(data):
-    frequencies = Counter(data)
-
-    root = build_tree(frequencies)
-    codes = generate_codes(root)
-
-    encoded = "".join(codes[byte] for byte in data)
-
-    return encoded, root
-
-def decompress_bytes(encoded, root):
-    decoded = decode(encoded, root)
-
-    return bytes(decoded)
-
-def decode_bytes(encoded, root):
-    if root.left is None and root.right is None:
-        return bytes([root.character]) * len(encoded)
-
-    decoded = bytearray()
-    current = root
-
-    for bit in encoded:
-        if bit == "0":
-            current = current.left
-        else:
-            current = current.right
-
-        if current.character is not None:
-            decoded.append(current.character)
-            current = root
-
-    return bytes(decoded)
-
-def decompress_bytes(encoded, root):
-    return decode_bytes(encoded, root)
-
-def compress_file(input_filename, output_filename):
-    with open(input_filename, "rb") as file:
-        data = file.read()
-
-    encoded, root = compress_bytes(data)
-
-    compressed_data, padding = bits_to_bytes(encoded)
-
-    save_compressed(
-        compressed_data,
-        padding,
-        root,
-        output_filename
-    )
-
-def decompress_file(input_filename, output_filename):
-    data, padding, root = load_compressed(input_filename)
-
-    bits = bytes_to_bits(data, padding)
-
-    decoded = decode_bytes(bits, root)
-
-    with open(output_filename, "wb") as file:
-        file.write(decoded)
