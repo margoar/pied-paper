@@ -1,5 +1,6 @@
 import heapq
 import json
+from typing import Counter
 
 class Node:
     def __init__(self, character=None, frequency=0):
@@ -46,7 +47,7 @@ def generate_codes(node, code="", codes=None):
         codes = {}
 
     if node.character is not None:
-        codes[node.character] = code
+        codes[node.character] = code or "0"
         return codes
 
     generate_codes(node.left, code + "0", codes)
@@ -63,6 +64,9 @@ def encode(text, codes):
     return encoded
 
 def decode(encoded, root):
+    if root.left is None and root.right is None:
+        return root.character * len(encoded)
+
     decoded = ""
     current = root
 
@@ -101,8 +105,11 @@ def save_compressed(data, padding, codes, filename):
         "codes": codes
     }
 
+   
     metadata_bytes = json.dumps(metadata).encode("utf-8")
     metadata_size = len(metadata_bytes)
+
+    print("Metadata:", metadata_size, "bytes")
 
     with open(filename, "wb") as file:
         file.write(metadata_size.to_bytes(4, "big"))
@@ -154,3 +161,24 @@ def build_tree_from_codes(codes):
         current.character = character
 
     return root
+
+def compress(text, filename):
+    frequencies = Counter(text)
+
+    root = build_tree(frequencies)
+    codes = generate_codes(root)
+
+    encoded = encode(text, codes)
+
+    data, padding = bits_to_bytes(encoded)
+
+    save_compressed(data, padding, codes, filename)
+
+def decompress(filename):
+    data, padding, codes = load_compressed(filename)
+
+    bits = bytes_to_bits(data, padding)
+
+    root = build_tree_from_codes(codes)
+
+    return decode(bits, root)
