@@ -3,6 +3,9 @@ from .huffman import (
     deserialize_tree_binary
 )
 
+COMPRESSION_NONE = 0
+COMPRESSION_HUFFMAN = 1
+
 
 def bits_to_bytes(bits):
     padding = (8 - len(bits) % 8) % 8
@@ -33,7 +36,7 @@ def bytes_to_bits(data, padding):
 def save_compressed(data, padding, root, filename, compression_type):
     tree_data = b""
 
-    if compression_type == 1:
+    if compression_type == COMPRESSION_HUFFMAN:
         tree_data = serialize_tree_binary(root)
 
     tree_size = len(tree_data)
@@ -81,6 +84,13 @@ def load_compressed(filename):
 
         compression_type = compression_type_data[0]
 
+        if compression_type not in (
+            COMPRESSION_NONE,
+            COMPRESSION_HUFFMAN
+        ):
+        
+            raise ValueError(f"Tipo de compresión no soportado: {compression_type}")
+
         tree_size_data = file.read(4)
 
         if len(tree_size_data) != 4:
@@ -113,7 +123,7 @@ def load_compressed(filename):
 
     root = None
 
-    if compression_type == 1:
+    if compression_type == COMPRESSION_HUFFMAN:
         root, _ = deserialize_tree_binary(tree_data)
 
     return data, padding, root, compression_type

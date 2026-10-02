@@ -1,5 +1,5 @@
 from collections import Counter
-
+import pytest
 from src.huffman import (
     build_tree,
     generate_codes,
@@ -87,11 +87,14 @@ def test_incomplete_pp_file(tmp_path):
 
     file.write_bytes(b"PP")
 
-    try:
-        decompress_file(str(file), str(output_file))
-        assert False
-    except ValueError as error:
-        assert str(error) == "Archivo PiedPiper incompleto"
+    with pytest.raises(
+        ValueError,
+        match="Archivo PiedPiper incompleto"
+    ):
+        decompress_file(
+            str(file),
+            str(output_file)
+        )
 
 
 def test_invalid_pp_file(tmp_path):
@@ -100,8 +103,11 @@ def test_invalid_pp_file(tmp_path):
 
     file.write_bytes(b"NO")
 
-    try:
-        decompress_file(str(file), str(output_file))
-        assert False
-    except ValueError as error:
-        assert str(error) == "El archivo no es un archivo PiedPiper válido"        
+    with pytest.raises(
+        ValueError,
+        match="El archivo no es un archivo PiedPiper válido"
+    ):
+        decompress_file(
+            str(file),
+            str(output_file)
+        )    

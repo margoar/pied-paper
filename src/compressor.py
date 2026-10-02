@@ -8,7 +8,9 @@ from .pp_format import (
     bits_to_bytes,
     bytes_to_bits,
     save_compressed,
-    load_compressed
+    load_compressed,
+    COMPRESSION_NONE,
+    COMPRESSION_HUFFMAN
 )
 
 
@@ -47,7 +49,7 @@ def compress_file(input_filename, output_filename):
             padding,
             root,
             output_filename,
-            compression_type=1
+            compression_type=COMPRESSION_HUFFMAN
         )
     else:
         save_compressed(
@@ -55,7 +57,7 @@ def compress_file(input_filename, output_filename):
             0,
             root,
             output_filename,
-            compression_type=0
+            compression_type=COMPRESSION_NONE
         )
 
 def decompress_file(input_filename, output_filename):
@@ -63,7 +65,7 @@ def decompress_file(input_filename, output_filename):
         input_filename
     )
 
-    if compression_type == 0:
+    if compression_type == COMPRESSION_NONE:
         decoded = data
     else:
         bits = bytes_to_bits(data, padding)
