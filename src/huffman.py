@@ -199,13 +199,7 @@ def deserialize_tree(data):
 
 def serialize_tree_binary(node):
     if node.character is not None:
-        character_bytes = node.character.encode("utf-8")
-
-        return (
-            b"\x01"
-            + bytes([len(character_bytes)])
-            + character_bytes
-        )
+        return b"\x01" + bytes([node.character])
 
     return (
         b"\x00"
@@ -218,11 +212,8 @@ def deserialize_tree_binary(data, index=0):
     index += 1
 
     if marker == 1:
-        length = data[index]
+        character = data[index]
         index += 1
-
-        character = data[index:index + length].decode("utf-8")
-        index += length
 
         return Node(character=character), index
 
@@ -285,3 +276,28 @@ def decode_bytes(encoded, root):
 
 def decompress_bytes(encoded, root):
     return decode_bytes(encoded, root)
+
+def compress_file(input_filename, output_filename):
+    with open(input_filename, "rb") as file:
+        data = file.read()
+
+    encoded, root = compress_bytes(data)
+
+    compressed_data, padding = bits_to_bytes(encoded)
+
+    save_compressed(
+        compressed_data,
+        padding,
+        root,
+        output_filename
+    )
+
+def decompress_file(input_filename, output_filename):
+    data, padding, root = load_compressed(input_filename)
+
+    bits = bytes_to_bits(data, padding)
+
+    decoded = decode_bytes(bits, root)
+
+    with open(output_filename, "wb") as file:
+        file.write(decoded)

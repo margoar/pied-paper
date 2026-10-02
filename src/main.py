@@ -1,14 +1,22 @@
-from huffman import compress_bytes, decompress_bytes
+from huffman import compress_file, decompress_file
+
+
+compress_file(
+    "examples/ejemplo.txt",
+    "ejemplo.pp"
+)
+
+decompress_file(
+    "ejemplo.pp",
+    "examples/recuperado.txt"
+)
 
 
 with open("examples/ejemplo.txt", "rb") as file:
-    data = file.read()
+    original = file.read()
+
+with open("examples/recuperado.txt", "rb") as file:
+    recovered = file.read()
 
 
-encoded, root = compress_bytes(data)
-
-decoded = decompress_bytes(encoded, root)
-
-print("Bytes originales:", len(data))
-print("Bits Huffman:", len(encoded))
-print("Descompresión correcta:", decoded == data)
+print("Archivos idénticos:", original == recovered)
