@@ -24,3 +24,6 @@ no solo hacer que funcione.
 ## Estado
 
 🚧 En desarrollo
+
+
+Si te sirve o te parece interesante, déjame una estrellita ⭐
