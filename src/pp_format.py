@@ -58,23 +58,57 @@ def load_compressed(filename):
                 "El archivo no es un archivo PiedPiper válido"
             )
 
-        version = file.read(1)[0]
+        version_data = file.read(1)
+
+        if not version_data:
+            raise ValueError(
+                "Archivo PiedPiper incompleto"
+            )
+
+        version = version_data[0]
 
         if version != 1:
             raise ValueError(
                 f"Versión no soportada: {version}"
             )
 
-        compression_type = file.read(1)[0]
+        compression_type_data = file.read(1)
+
+        if not compression_type_data:
+            raise ValueError(
+                "Archivo PiedPiper incompleto"
+            )
+
+        compression_type = compression_type_data[0]
+
+        tree_size_data = file.read(4)
+
+        if len(tree_size_data) != 4:
+            raise ValueError(
+                "Archivo PiedPiper incompleto"
+            )
 
         tree_size = int.from_bytes(
-            file.read(4),
+            tree_size_data,
             "big"
         )
 
-        padding = file.read(1)[0]
+        padding_data = file.read(1)
+
+        if not padding_data:
+            raise ValueError(
+                "Archivo PiedPiper incompleto"
+            )
+
+        padding = padding_data[0]
 
         tree_data = file.read(tree_size)
+
+        if len(tree_data) != tree_size:
+            raise ValueError(
+                "Archivo PiedPiper incompleto"
+            )
+
         data = file.read()
 
     root = None
