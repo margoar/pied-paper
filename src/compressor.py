@@ -1,6 +1,7 @@
 from .huffman import (
     compress_bytes,
-    decode_bytes
+    decode_bytes,
+    serialize_tree_binary
 )
 
 from .pp_format import (
@@ -19,20 +20,54 @@ def compress_file(input_filename, output_filename):
 
     compressed_data, padding = bits_to_bytes(encoded)
 
-    save_compressed(
-        compressed_data,
-        padding,
-        root,
-        output_filename
+    tree_data = serialize_tree_binary(root)
+
+    huffman_size = (
+        2 +  # magic
+        1 +  # versión
+        1 +  # tipo
+        4 +  # tamaño árbol
+        1 +  # padding
+        len(tree_data) +
+        len(compressed_data)
     )
 
+    original_size = (
+        2 +  # magic
+        1 +  # versión
+        1 +  # tipo
+        4 +  # tamaño árbol
+        1 +  # padding
+        len(data)
+    )
+
+    if huffman_size < original_size:
+        save_compressed(
+            compressed_data,
+            padding,
+            root,
+            output_filename,
+            compression_type=1
+        )
+    else:
+        save_compressed(
+            data,
+            0,
+            root,
+            output_filename,
+            compression_type=0
+        )
 
 def decompress_file(input_filename, output_filename):
-    data, padding, root = load_compressed(input_filename)
+    data, padding, root, compression_type = load_compressed(
+        input_filename
+    )
 
-    bits = bytes_to_bits(data, padding)
-
-    decoded = decode_bytes(bits, root)
+    if compression_type == 0:
+        decoded = data
+    else:
+        bits = bytes_to_bits(data, padding)
+        decoded = decode_bytes(bits, root)
 
     with open(output_filename, "wb") as file:
         file.write(decoded)

@@ -29,20 +29,25 @@ def bytes_to_bits(data, padding):
     return bits
 
 
-def save_compressed(data, padding, root, filename):
-    tree_data = serialize_tree_binary(root)
+
+def save_compressed(data, padding, root, filename, compression_type):
+    tree_data = b""
+
+    if compression_type == 1:
+        tree_data = serialize_tree_binary(root)
+
     tree_size = len(tree_data)
 
     with open(filename, "wb") as file:
         file.write(b"PP")
         file.write(bytes([1]))
+        file.write(bytes([compression_type]))
 
         file.write(tree_size.to_bytes(4, "big"))
         file.write(bytes([padding]))
 
         file.write(tree_data)
         file.write(data)
-
 
 def load_compressed(filename):
     with open(filename, "rb") as file:
@@ -60,6 +65,8 @@ def load_compressed(filename):
                 f"Versión no soportada: {version}"
             )
 
+        compression_type = file.read(1)[0]
+
         tree_size = int.from_bytes(
             file.read(4),
             "big"
@@ -70,6 +77,9 @@ def load_compressed(filename):
         tree_data = file.read(tree_size)
         data = file.read()
 
-    root, _ = deserialize_tree_binary(tree_data)
+    root = None
 
-    return data, padding, root
+    if compression_type == 1:
+        root, _ = deserialize_tree_binary(tree_data)
+
+    return data, padding, root, compression_type
