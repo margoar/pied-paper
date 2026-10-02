@@ -86,25 +86,19 @@ def bits_to_bytes(bits):
 
     return bytes(data), padding
 
-def save_compressed(data, filename):
-    with open(filename, "wb") as file:
-        file.write(data)
-
 def save_compressed(data, padding, root, filename):
-    metadata = {
-        "padding": padding,
-        "tree": serialize_tree(root)
-    }
-
-    metadata_bytes = json.dumps(metadata).encode("utf-8")
-    metadata_size = len(metadata_bytes)
+    tree_data = serialize_tree_binary(root)
+    tree_size = len(tree_data)
 
     with open(filename, "wb") as file:
         file.write(b"PP")
         file.write(bytes([1]))
-        file.write(metadata_size.to_bytes(4, "big"))
-        file.write(metadata_bytes)
-        file.write(data)     
+
+        file.write(tree_size.to_bytes(4, "big"))
+        file.write(bytes([padding]))
+
+        file.write(tree_data)
+        file.write(data)    
 
 def bytes_to_bits(data, padding):
     bits = ""
@@ -129,16 +123,15 @@ def load_compressed(filename):
         if version != 1:
             raise ValueError(f"Versión no soportada: {version}")
 
-        metadata_size = int.from_bytes(file.read(4), "big")
+        tree_size = int.from_bytes(file.read(4), "big")
+        padding = file.read(1)[0]
 
-        metadata = json.loads(
-            file.read(metadata_size).decode("utf-8")
-        )
-
+        tree_data = file.read(tree_size)
         data = file.read()
 
-    root = deserialize_tree(metadata["tree"])
-    return data, metadata["padding"], root
+        root, _ = deserialize_tree_binary(tree_data)
+
+    return data, padding, root
 
 
 def build_tree_from_codes(codes):
@@ -200,6 +193,47 @@ def deserialize_tree(data):
     node.right = deserialize_tree(data["right"])
 
     return node
+
+def serialize_tree_binary(node):
+    if node.character is not None:
+        character_bytes = node.character.encode("utf-8")
+
+        return (
+            b"\x01"
+            + bytes([len(character_bytes)])
+            + character_bytes
+        )
+
+    return (
+        b"\x00"
+        + serialize_tree_binary(node.left)
+        + serialize_tree_binary(node.right)
+    )
+
+def deserialize_tree_binary(data, index=0):
+    marker = data[index]
+    index += 1
+
+    if marker == 1:
+        length = data[index]
+        index += 1
+
+        character = data[index:index + length].decode("utf-8")
+        index += length
+
+        return Node(character=character), index
+
+    if marker == 0:
+        left, index = deserialize_tree_binary(data, index)
+        right, index = deserialize_tree_binary(data, index)
+
+        node = Node()
+        node.left = left
+        node.right = right
+
+        return node, index
+
+    raise ValueError("Árbol Huffman inválido")
 
 def compress_text(text):
     frequencies = Counter(text)
