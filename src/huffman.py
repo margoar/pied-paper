@@ -16,14 +16,11 @@ def build_initial_heap(frequencies):
     for character, frequency in frequencies.items():
         node = Node(character, frequency)
 
-        heapq.heappush(
-            heap,
-            (frequency, counter, node)
-        )
-
+        heapq.heappush(heap, (frequency, counter, node))
         counter += 1
 
     return heap
+
 
 def build_tree(frequencies):
     heap = build_initial_heap(frequencies)
@@ -33,18 +30,12 @@ def build_tree(frequencies):
         _, _, left = heapq.heappop(heap)
         _, _, right = heapq.heappop(heap)
 
-        parent = Node(
-            frequency=left.frequency + right.frequency
-        )
+        parent = Node(frequency=left.frequency + right.frequency)
 
         parent.left = left
         parent.right = right
 
-        heapq.heappush(
-            heap,
-            (parent.frequency, counter, parent)
-        )
-
+        heapq.heappush(heap, (parent.frequency, counter, parent))
         counter += 1
 
     return heapq.heappop(heap)[2]
@@ -63,33 +54,26 @@ def generate_codes(node, code="", codes=None):
 
     return codes
 
-def print_tree(node, prefix=""):
-    if node is None:
-        return
+def encode(text, codes):
+    encoded = ""
 
-    if node.character is not None:
-        print(f"{prefix}{node.character} ({node.frequency})")
-    else:
-        print(f"{prefix}* ({node.frequency})")
+    for character in text:
+        encoded += codes[character]
 
-    print_tree(node.left, prefix + "  ")
-    print_tree(node.right, prefix + "  ")
+    return encoded
 
+def decode(encoded, root):
+    decoded = ""
+    current = root
 
-frequencies = {
-    "A": 5,
-    "B": 3,
-    "C": 2
-}
+    for bit in encoded:
+        if bit == "0":
+            current = current.left
+        else:
+            current = current.right
 
-root = build_tree(frequencies)
+        if current.character is not None:
+            decoded += current.character
+            current = root
 
-print_tree(root)
-
-
-codes = generate_codes(root)
-
-print("\nCódigos:")
-
-for character, code in codes.items():
-    print(f"{character} → {code}")
+    return decoded
