@@ -16,14 +16,14 @@ no solo hacer que funcione.
 - Redundancia
 - Entropía
 - Huffman
-- LZ
+- LZ77
 - Compresión sin pérdida
-- Compresión de imágenes
-- Compresión de video
+- Formato binario propio
 
 ## Estado
 
 🚧 En desarrollo
 
+Primera versión funcional: `v0.1.0`
 
-Si te sirve o te parece interesante, déjame una estrellita ⭐
+¿Te sirvió? Déjame una estrellita ⭐

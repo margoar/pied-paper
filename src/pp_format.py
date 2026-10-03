@@ -5,6 +5,7 @@ from .huffman import (
 
 COMPRESSION_NONE = 0
 COMPRESSION_HUFFMAN = 1
+COMPRESSION_LZ77_HUFFMAN = 2
 
 
 def bits_to_bytes(bits):
@@ -30,8 +31,6 @@ def bytes_to_bits(data, padding):
         bits = bits[:-padding]
 
     return bits
-
-
 
 def save_compressed(data, padding, root, filename, compression_type):
     tree_data = b""
@@ -127,3 +126,32 @@ def load_compressed(filename):
         root, _ = deserialize_tree_binary(tree_data)
 
     return data, padding, root, compression_type
+
+def get_format_stats(filename):
+    with open(filename, "rb") as file:
+        magic = file.read(2)
+        version = file.read(1)
+        compression_type = file.read(1)
+
+        tree_size = int.from_bytes(
+            file.read(4),
+            "big"
+        )
+
+        padding = file.read(1)
+
+        tree_data = file.read(tree_size)
+        data = file.read()
+
+    return {
+        "header_size": 9,
+        "tree_size": len(tree_data),
+        "data_size": len(data),
+        "total_size": (
+            9
+            + len(tree_data)
+            + len(data)
+        ),
+        "compression_type": compression_type[0],
+        "padding": padding[0]
+    }
